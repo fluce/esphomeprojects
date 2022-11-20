@@ -104,12 +104,13 @@ time:
 # Logger. Disable the temperature sensor etc. to focus on the HMI development
 logger:
   baud_rate: 0
-  level: DEBUG
+  level: VERBOSE
   logs:
     sensor: WARN
     resistance: WARN
     text_sensor: WARN
     ntc: WARN
+    #nextion: VERBOSE
 
 # OTA (Over the air updates) password. Add to your secrets.yaml
 ota:
@@ -123,10 +124,10 @@ uart:
   id: tf_uart
 
 # Functionality for the Nextion display
-external_components:
-  - source: github://pr#2956
-    components: [nextion]
-    refresh: 1h
+#external_components:
+#  - source: github://fluce/esphome@dev
+#    components: [nextion]
+#    refresh: 30s
 
 # A reboot button is always useful
 button:
@@ -142,7 +143,11 @@ binary_sensor:
       number: 14
       inverted: true
     on_click:
+      - logger.log: "Hello World 1"
       - switch.toggle: relay_1
+      - lambda: id(disp1).dump_config();
+      - lambda: id(disp1).upload_tft();
+      - logger.log: "Hello World 2"
 
   # Right button below the display
   - platform: gpio
@@ -817,7 +822,6 @@ number:
       then:
         - lambda: 'id(disp1).send_command_printf("Home.brightdd.val=%i", int(x));'
 
-      
 # Configure the screen itself
 display:
   - platform: nextion
@@ -827,7 +831,9 @@ display:
     # A little fun...
     on_setup:
       then:
-        # Enable 1 light page (up to 4 available)
+        - lambda: id(disp1).send_command_printf("lcd_dev fffb 0002 0000 0020"); # Magic command to avoid 32pixel touchscreen offset on NSPanel (https://github.com/UNUF/nxt-doc/blob/main/Protocols/Full%20Instruction%20Set.md#readme)
+        - lambda: id(disp1).send_command_printf("DRAKJHSUYDGBNCJHGJKSHBDN");       
+         # Enable 1 light page (up to 4 available)
         - lambda: id(disp1).send_command_printf("Lights.pages.val=1");
         - number.set:
             id: brightness
